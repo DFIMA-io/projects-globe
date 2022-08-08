@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: SansSerif;
+      }
+
+      #time {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        color: lightblue;
+      }
+
+      #info {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 500px;
+        display: none;
+      }
+    </style>
+
+    <script src="//unpkg.com/three"></script>
+    <script src="//unpkg.com/globe.gl"></script>
+  <!--  <script src="../../dist/globe.gl.js"></script>-->
+    <script src="//unpkg.com/solar-calculator"></script>
+  </head>
+
+  <body>
+    <div id="globeViz"></div>
+    <div id="time"></div>
+    <div id="info"></div>
+
+    <script>
+
+    const places = {
+        features: [
+            {"type":"Feature", properties: {"latitude":41.9000122264,"longitude":12.4478083889, name:"Housing Loan", project_size: 60000000}},
+            {"type":"Feature", properties: {"latitude":43.9171500845,"longitude":12.4666702867, name:"Renewal Energy Project", project_size: 40000000}},
+            {"type":"Feature", properties: {"latitude":2.743333,"longitude":101.698056, name:"Airport, 10M USD", project_size: 10000000}},
+            {"type":"Feature", properties: {"latitude":39.861667,"longitude":-104.673056, name:"Transportion 40M USD", project_size: 40000000}},
+            {"type":"Feature", properties: {"latitude":29.976111,"longitude":31.132778, name:"Sea Port", project_size: 30000000}}
+        ]
+    }
+
+    const markerSvg = `<svg viewBox="-4 0 36 36">
+        <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
+        <circle fill="black" cx="14" cy="14" r="7"></circle>
+    </svg>`;
+
+    // Gen random data
+    const N = 50;
+    const gData = [...Array(N).keys()].map(() => ({
+        lat: (Math.random() - 0.5) * 180,
+        lng: (Math.random() - 0.5) * 360,
+        size: 7 + Math.random() * 30,
+        color: ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)]
+    }));
+
+      const VELOCITY = 1; // minutes per frame
+
+      const sunPosAt = dt => {
+        const day = new Date(+dt).setUTCHours(0, 0, 0, 0);
+        const t = solar.century(dt);
+        const longitude = (day - dt) / 864e5 * 360 - 180;
+        return [longitude - solar.equationOfTime(t) / 4, solar.declination(t)];
+      };
+
+      let dt = +new Date();
+      const solarTile = { pos: sunPosAt(dt) };
+      const timeEl = document.getElementById('time');
+
+      const world = Globe()
+        (document.getElementById('globeViz'))
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+        .htmlElementsData(gData)
+        .htmlElement(d => {
+            const el = document.createElement('div');
+            el.innerHTML = markerSvg;
+            el.innerHTML += '<p>PROJECT TYPE/SIZE <br/>' + `<small>(${d.lat.toFixed(2)}, ${d.lng.toFixed(2)})</small>` + '</p>'
+            el.style.color = d.color;
+            el.style.width = `${d.size}px`;
+
+            el.style['pointer-events'] = 'auto';
+            el.style.cursor = 'pointer';
+            //el.onclick = () => console.info(d);
+            el.onclick = () => {
+                // alert(d);
+                // zoom to the marker. hover at 1.0 altitude
+                let c = world.pointOfView();
+                console.log(c)
+                c.lat, c.lng = d.lat, d.lng;
+                c.altitude = 0.25;
+                console.log(c)
+                world.pointOfView(c, 1000);
+            }
+            return el;
+        })
+        .tilesData([solarTile])
+        .tileLng(d => d.pos[0])
+        .tileLat(d => d.pos[1])
+        .labelsData(places.features)
+        .labelLat(d => d.properties.latitude)
+        .labelLng(d => d.properties.longitude)
+        .labelText(d => d.properties.name)
+        .labelSize(d => Math.sqrt(d.properties.project_size) * 2e-4)
+        .labelDotRadius(d => Math.sqrt(d.properties.project_size) * 4e-4)
+        .labelColor(() => 'rgba(255, 165, 0, 0.75)')
+        .labelResolution(3)
+        .tileAltitude(0.005)
+        .tileWidth(180)
+        .tileHeight(180)
+        .tileUseGlobeProjection(false)
+        .tileMaterial(() => new THREE.MeshLambertMaterial({ color: '#fff000', opacity: 0.1, transparent: true }))
+        .tilesTransitionDuration(0);
+
+      // animate time of day
+      requestAnimationFrame(() =>
+        (function animate() {
+          // dt += VELOCITY * 60 * 1000;
+          dt += VELOCITY  * 60 * 1000;
+          solarTile.pos = sunPosAt(dt);
+          world.tilesData([solarTile]);
+          timeEl.textContent = new Date(dt).toLocaleString();
+          requestAnimationFrame(animate)
+          // setTimeout(, 1000);
+        })()
+      );
+
+      function stop() {
+        world.pauseAnimation()
+      }
+      function start() {
+        world.resumeAnimation()
+      }
+      function zoomIn(step=0.5) {
+        let  c = world.pointOfView()
+        c.altitude -= step
+        world.pointOfView(c)
+
+      }
+
+      const randomIntFromInterval = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+
+      let _jump = true;
+      function jump() {
+        let i = randomIntFromInterval(1,gData.length-1);
+        console.log("Jumping to " + i.toString());
+        let p = gData[i]
+        let c = world.pointOfView()
+        c.lat, c.lng = p.lat, p.lng;
+        c.altitude = 0.85;
+        world.pointOfView(c, 1500);
+        if (_jump) {
+            i = randomIntFromInterval(4000,8000)
+            console.log("Next jump in " + i.toString())
+            setTimeout(jump, i)
+        }
+      }
+      jump(); // first jump
+
+    </script>
+  </body>
+</html>
