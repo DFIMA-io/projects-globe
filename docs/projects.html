@@ -1,0 +1,185 @@
+<html>
+<script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
+ 
+<script src="https://jsuites.net/v4/jsuites.js"></script>
+<link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+ 
+<body>
+    <button onclick="connectSite()">Connect wallet.</button>
+    <button onclick="sign()">Sign!</button>
+    <button onclick="signTypedData_v4()">Sign v4!</button>
+    <div id="spreadsheet"></div>
+    <span id="output"></span>
+    <div>&copy; 2024 oid.dfima.io All Rights Reserve.</div>
+</body>
+ 
+<script>
+var data = [
+    ['Majestic Avocado Trees', 'Renewable Energy', '2019-01-15', '', true, '200000000,00', '#777700'],
+    ['Windy Ocean Shrimps', 'Renewable Energy', '2020-03-31', '', true, '50000000,00', '#777700'],
+    ['Sweet Seaside Orange', 'Transportation Infrastructure', '2017-02-12', '', true, '350000000,00', '#777700'],
+    ['Wheat Field Grande', 'Food Security', '2018-07-11', '', true, '46000000,00', '#007777'],
+];
+ 
+jspreadsheet(document.getElementById('spreadsheet'), {
+    data:data,
+    columns: [
+        {
+            type: 'text',
+            title:'Project',
+            width:180
+        },
+        {
+            type: 'dropdown',
+            title:'Type',
+            width:250,
+            source:[
+                "Sustainable Development Goals Acceleration",
+                "Carbon Credits",
+                "Food Security",
+                "Affordable Housing",
+                "Renewable Energy",
+                "Transportation Infrastructure",
+                "Smart Factory and Industrial Hub",
+                "Last-mile Internet Access and Cybersecurity",
+                // (...)
+              ]
+        },
+        {
+            type: 'calendar',
+            title:'Inception Date',
+            width:120
+        },
+        {
+            type: 'image',
+            title:'Cover Photo',
+            width:120
+        },
+        {
+            type: 'checkbox',
+            title:'Approved',
+            width:80
+        },
+        {
+            type: 'numeric',
+            title:'Total Cost',
+            mask:'$ #.##,00',
+            width:180,
+            decimal:','
+        },
+        {
+            type: 'color',
+            width:80,
+            render:'square',
+            title:'Status',
+        },
+     ]
+});
+</script>
+
+
+<script>
+    /* 1. connect to site
+        https://wallet-docs.brave.com/ethereum/use-cases/connecting-your-site
+    User click the button to call this.
+        */
+async function connectSite() {
+  return await window.ethereum.request({ method: 'eth_requestAccounts' })
+    }
+// console.log(await connectSite())
+
+/* 2. check wallet type
+*/
+if (window.ethereum) {
+    const isBraveWallet = () =>  {window.ethereum.request({
+    method: 'web3_clientVersion'
+    }).then((clientVersion) => {
+        console.log("Provider running...")
+        return clientVersion.split('/')[0] === 'BraveWallet'
+    })
+    }
+    console.log('Brave Wallet: ', isBraveWallet())
+} else {
+    console.log("No window.ethereum")
+}
+
+/* 3. sign
+https://wallet-docs.brave.com/ethereum/use-cases/signing-data
+*/
+async function sign() {
+    const accounts = await window.ethereum.request({
+        id: '43113',
+        method: 'eth_accounts',
+        params: [],
+    })
+    if (accounts.length === 0) {
+        console.log('No accounts allowed')
+        document.getElementById('output').innerHTML = 'No accounts allowed.'
+        return
+    }
+    const from = accounts[0]
+    // This hex is ascii for 'hello world'
+    const message = '0x68656c6c6f20776f726c64'
+    const params = [from, message]
+    return await window.ethereum.request({
+        method: 'eth_sign',
+        params
+    })  
+}
+// console.log(await sign());
+
+
+// Sepolia 11155111
+// Fuji 43113
+
+async function signTypedData_v4(method, messageInput) {
+  const message = {
+    "types":{
+      "EIP712Domain":[
+        {"name":"name","type":"string"},
+        {"name":"version","type":"string"},
+        {"name":"chainId","type":"uint256"},
+        {"name":"verifyingContract","type":"address"}],
+      "Person":[
+        {"name":"name","type":"string"},
+        {"name":"wallet","type":"address"}],
+      "Mail":[
+        {"name":"from","type":"Person"},
+        {"name":"to","type":"Person[]"},
+        {"name":"contents","type":"string"}]},
+      "primaryType":"Mail",
+      "domain":{
+        "name":"Ether Mail",
+        "version":"1",
+        "chainId":1,
+        "verifyingContract":"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"},
+      "message":{
+        "from":{"name":"Cow","wallet":"0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"},
+        "to": [
+          {"name":"Bob","wallet":"0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"},
+          {"name":"Alice","wallet":"0xaAaAAAAaaAAAaaaAaaAaaaaAAaAaaaaAaAaaAAaA"},
+        ],
+        "contents":"Hello, Bob & Alice!"
+      }
+    }
+  const accounts = await window.ethereum.request({
+    id: '43113',
+    method: 'eth_accounts',
+    params: [],
+  })
+  if (accounts.length === 0) {
+    console.log('No accounts allowed')
+    return
+  }
+  const from = accounts[0]
+  const params = [from, JSON.stringify(message)]
+  return await window.ethereum.request({
+    method: 'eth_signTypedData_v4',
+    params
+  })  
+}
+
+
+</script>
+</html>
