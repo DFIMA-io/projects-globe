@@ -1,18 +1,15 @@
 <html>
 <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
 <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
- 
-<script src="https://jsuites.net/v4/jsuites.js"></script>
+ <script src="https://jsuites.net/v4/jsuites.js"></script>
 <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
  
 <body>
     <button onclick="connectSite()">Connect wallet.</button>
-    <button onclick="addAsset()">Add asset.</button>
     <button onclick="sign()">Sign!</button>
     <button onclick="signTypedData_v4()">Sign v4!</button>
-    <button onclick="signAndSendTransaction()">Sign and Send!</button>
-    <span id="output"></span>
     <div id="spreadsheet"></div>
+    <span id="output"></span>
     <div>&copy; 2024 oid.dfima.io All Rights Reserve.</div>
 </body>
  
@@ -20,8 +17,8 @@
 var data = [
     ['Majestic Avocado Trees', 'Renewable Energy', '2019-01-15', '', true, '200000000,00', '#777700'],
     ['Windy Ocean Shrimps', 'Renewable Energy', '2020-03-31', '', true, '50000000,00', '#777700'],
-    ['Sweet Seaside Oranges', 'Transportation Infrastructure', '2017-02-12', '', true, '350000000,00', '#777700'],
-    ['Grande Wheathy Fields', 'Food Security and Smart Farming', '2018-07-11', '', true, '46000000,00', '#007777'],
+    ['Sweet Seaside Orange', 'Transportation Infrastructure', '2017-02-12', '', true, '350000000,00', '#777700'],
+    ['Wheat Field Grande', 'Food Security', '2018-07-11', '', true, '46000000,00', '#007777'],
 ];
  
 jspreadsheet(document.getElementById('spreadsheet'), {
@@ -38,15 +35,13 @@ jspreadsheet(document.getElementById('spreadsheet'), {
             width:250,
             source:[
                 "Sustainable Development Goals Acceleration",
-                "Carbon Credits and Climate Change Initiative",
-                "Food Security and Smart Farming",
+                "Carbon Credits",
+                "Food Security",
                 "Affordable Housing",
                 "Renewable Energy",
                 "Transportation Infrastructure",
                 "Smart Factory and Industrial Hub",
-                "Cybersecurity and Last-mile Internet Access",
-                "Education and Social Welfare",
-                "Public Health Improvement Programs",
+                "Last-mile Internet Access and Cybersecurity",
                 // (...)
               ]
         },
@@ -124,11 +119,6 @@ async function sign() {
     }
     const from = accounts[0]
     // This hex is ascii for 'hello world'
-    //  68656c6c6f20776f726c64  ->  hello world
-    // https://www.rapidtables.com/convert/number/hex-to-ascii.html
-    //
-    // 
-    // good morning  data: '0x676F6F64206D6F726E696E67'
     const message = '0x68656c6c6f20776f726c64'
     const params = [from, message]
     return await window.ethereum.request({
@@ -139,11 +129,8 @@ async function sign() {
 // console.log(await sign());
 
 
-/* 4. sign typed */
-
-// Mainnet 1
 // Sepolia 11155111
-// Fuji 43113  -- ok
+// Fuji 43113
 
 async function signTypedData_v4(method, messageInput) {
   const message = {
@@ -164,7 +151,7 @@ async function signTypedData_v4(method, messageInput) {
       "domain":{
         "name":"Ether Mail",
         "version":"1",
-        "chainId":43113,
+        "chainId":1,
         "verifyingContract":"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"},
       "message":{
         "from":{"name":"Cow","wallet":"0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"},
@@ -193,68 +180,5 @@ async function signTypedData_v4(method, messageInput) {
 }
 
 
-/* 5. sign and send transaction */
-
-async function signAndSendTransaction() {
-  const accounts = await window.ethereum.request({
-    id: '43113',
-    method: 'eth_accounts',
-    params: [],
-  })
-  if (accounts.length === 0) {
-    console.log('No accounts allowed')
-    return
-  }
-  const from = accounts[0]
-  const to = '0x9eF4a09dC2cDA0a6F98B79326718AbBeF2EC141c'
-  console.log("Sending from " + from + " to " + to) 
-  const params = [{
-    from,
-    // Change this to a different address
-    to: to,
-    value: '0x16345785D8A0000'
-    // data: '0x...'
-    //
-    // Gas propeties are not needed, but if you specify them,
-    // you can use either:
-    // `maxPriorityFeePerGas`
-    // `maxFeePerGas`
-    // or
-    // `gasPrice`
-  }]
-
-  const signedTransaction = await window.ethereum.request({
-    method: 'eth_signTransaction',
-    params
-  })
-
-  return await window.ethereum.request({
-    method: 'eth_sendRawTransaction',
-    params: [ signedTransaction ]
-  })
-}
-
-
-/* 6. add token */
-
-async function addAsset() {
-  if (!window.ethereum.isConnected()) {
-    alert("Provider not connected");
-  }
-  return await ethereum.request({
-    method: 'wallet_watchAsset',
-    params: {
-      type: 'ERC20',
-      options: {
-        address: '0x7e80c86C71e7f098386014AD805483566B3E000e',
-        symbol: 'DMAETest',
-        decimals: 18,
-        image: 'https://oid.dfima.io/welcome/assets/images/DFIMA_r/FjTR7EenDP-252.avif',
-      },
-    },
-  })
-}
-
 </script>
 </html>
-
