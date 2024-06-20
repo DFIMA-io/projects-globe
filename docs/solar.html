@@ -7,49 +7,24 @@
     <title>Document</title>
     <style>
       body {
-        margin: 0 auto;
+        margin: 0;
         font-family: SansSerif;
-        width: 100%;
-        min-width: 1200px;
       }
 
       #time {
         position: absolute;
-        top: 8px;
-        left: 50%;
+        bottom: 8px;
+        left: 8px;
         color: lightblue;
-        font-size: 36px;
       }
 
       #info {
         position: absolute;
-        bottom: 8px;
-        left: 0px;
+        top: 8px;
+        left: 8px;
         width: 500px;
-        /* display: none; */
-        background: #666;
-        margin: 0 2em;
+        display: none;
       }
-      #wrapper {
-        border: 3px red;
-        width: 100%;
-        height: 100%;
-      }
-      #globeViz {
-        margin: 0 auto;
-        width: 1200px;
-        background: #000;
-      }
-      #main {
-        position: absolute;
-        top: 7em;
-        right: 20%;
-        width: 30em;
-        height: 20em;
-        background: #666;
-        padding: 0 1em;
-      }
-
     </style>
 
     <script src="//unpkg.com/three"></script>
@@ -59,27 +34,10 @@
   </head>
 
   <body>
-    <div id="wrapper">
-      <div id="globeViz"></div>
-      <div id="time"></div>
-      <div id="info">
-        <h1>Global Projects Directory</h1>
-      </div>
-      <div id="main">
-        <h2>Contracts</h2>
-        <p>Network:</p>
-        <dl>
-          <dt>Ethereum (Mainnet) <span id="eth_mainnet"></span></dt>
-          <dd>bar</dd>
-          <dt>Avalanche (Mainnet) <span id="avax_mainnet"></span></dt>
-          <dd>bar</dd>
-          <dt>Ethereum (Sepolia) <span id="eth_sepolia"></span></dt>
-          <dd>bar</dd>
-          <dt>Avalanche (Testnet) <span id="avax_fuji"></span></dt>
-          <dd>bar</dd>
-        </dl>
-      </div>
-    </div>
+    <div id="globeViz"></div>
+    <div id="time"></div>
+    <div id="info"></div>
+
     <script>
 
     const places = {
@@ -132,7 +90,7 @@
 
             el.style['pointer-events'] = 'auto';
             el.style.cursor = 'pointer';
-            // el.onclick = () => console.info(d);
+            //el.onclick = () => console.info(d);
             el.onclick = () => {
                 // alert(d);
                 // zoom to the marker. hover at 1.0 altitude
@@ -166,14 +124,11 @@
       // animate time of day
       requestAnimationFrame(() =>
         (function animate() {
-          // dt += VELOCITY * 60 * 1000; // Too fast
-          dt += VELOCITY  * 60 * 20;
+          // dt += VELOCITY * 60 * 1000;
+          dt += VELOCITY  * 60 * 1000;
           solarTile.pos = sunPosAt(dt);
           world.tilesData([solarTile]);
-          // actual time
-          timeEl.textContent = new Date().toLocaleString();
-          // sim time
-          // timeEl.textContent = new Date(dt).toLocaleString();
+          timeEl.textContent = new Date(dt).toLocaleString();
           requestAnimationFrame(animate)
           // setTimeout(, 1000);
         })()
